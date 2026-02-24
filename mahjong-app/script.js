@@ -22,12 +22,16 @@ const state = {
   discards: [],
   turn: 0,
   active: false,
-  won: false
+  won: false,
+  selectedTile: null
 };
 
 const el = {
   newGameBtn: document.getElementById("new-game-btn"),
   drawBtn: document.getElementById("draw-btn"),
+  discardSelectedBtn: document.getElementById("discard-selected-btn"),
+  discardDrawnBtn: document.getElementById("discard-drawn-btn"),
+  selectedTileLabel: document.getElementById("selected-tile-label"),
   wallCount: document.getElementById("wall-count"),
   turnCount: document.getElementById("turn-count"),
   gameState: document.getElementById("game-state"),
@@ -64,6 +68,12 @@ function sortHand(hand) {
   hand.sort((a, b) => order.get(a) - order.get(b));
 }
 
+function selectTile(tile) {
+  if (!state.drawnTile || !state.active) return;
+  state.selectedTile = tile;
+  render();
+}
+
 function newGame() {
   state.wall = makeWall();
   state.hand = state.wall.splice(0, 13);
@@ -73,6 +83,7 @@ function newGame() {
   state.turn = 0;
   state.active = true;
   state.won = false;
+  state.selectedTile = null;
   el.log.innerHTML = "";
   log("新しい局を開始しました。ツモってください。");
   render();
@@ -88,6 +99,7 @@ function drawTile() {
   }
   state.drawnTile = state.wall.shift();
   state.turn += 1;
+  state.selectedTile = null;
   log(`${state.turn}巡目 ツモ: ${tileName(state.drawnTile)}`);
 
   const candidate = [...state.hand, state.drawnTile];
@@ -98,6 +110,11 @@ function drawTile() {
   }
 
   render();
+}
+
+function discardSelectedTile() {
+  if (!state.selectedTile) return;
+  discardTile(state.selectedTile);
 }
 
 function discardTile(tile, fromDrawn = false) {
@@ -117,6 +134,7 @@ function discardTile(tile, fromDrawn = false) {
   }
 
   state.drawnTile = null;
+  state.selectedTile = null;
   render();
 }
 
@@ -198,17 +216,26 @@ function render() {
   }
 
   el.drawBtn.disabled = !state.active || !!state.drawnTile;
+  el.discardDrawnBtn.disabled = !state.active || !state.drawnTile;
+  el.discardSelectedBtn.disabled = !state.active || !state.drawnTile || !state.selectedTile;
+  el.selectedTileLabel.textContent = `選択中の牌: ${state.selectedTile ? tileName(state.selectedTile) : "なし"}`;
 
   el.hand.innerHTML = "";
   state.hand.forEach((tile) => {
-    const tileEl = document.createElement("div");
-    tileEl.className = "tile";
+    const tileEl = document.createElement("button");
+    tileEl.className = `tile${state.selectedTile === tile ? " selected" : ""}`;
+    tileEl.type = "button";
     tileEl.innerHTML = `<span class="tile-code">${tileName(tile)}</span>`;
+    tileEl.addEventListener("click", () => selectTile(tile));
 
     if (state.drawnTile) {
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.textContent = "捨てる";
-      btn.addEventListener("click", () => discardTile(tile));
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        discardTile(tile);
+      });
       tileEl.appendChild(btn);
     }
 
@@ -216,13 +243,6 @@ function render() {
   });
 
   el.drawnTile.textContent = state.drawnTile ? tileName(state.drawnTile) : "-";
-  if (state.drawnTile) {
-    const discardBtn = document.createElement("button");
-    discardBtn.textContent = "ツモ切り";
-    discardBtn.style.marginLeft = "0.5rem";
-    discardBtn.addEventListener("click", () => discardTile(state.drawnTile, true));
-    el.drawnTile.appendChild(discardBtn);
-  }
 
   el.discards.innerHTML = "";
   state.discards.forEach((tile) => {
@@ -235,5 +255,7 @@ function render() {
 
 el.newGameBtn.addEventListener("click", newGame);
 el.drawBtn.addEventListener("click", drawTile);
+el.discardSelectedBtn.addEventListener("click", discardSelectedTile);
+el.discardDrawnBtn.addEventListener("click", () => discardTile(state.drawnTile, true));
 
 render();

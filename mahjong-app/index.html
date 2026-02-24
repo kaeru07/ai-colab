@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>AI Colab 麻雀ミニゲーム</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -25,7 +27,16 @@
     <section>
       <h2>手牌</h2>
       <div id="hand" class="tile-row"></div>
-      <p class="hint">打牌したい牌の「捨てる」ボタンを押してください。</p>
+      <p class="hint">iPhoneでは牌をタップして選択後「選択牌を捨てる」を押してください。</p>
+    </section>
+
+    <section>
+      <h2>タッチ操作（iPhone向け）</h2>
+      <div class="touch-actions">
+        <button id="discard-selected-btn" disabled>選択牌を捨てる</button>
+        <button id="discard-drawn-btn" disabled>ツモ牌を捨てる（ツモ切り）</button>
+      </div>
+      <p id="selected-tile-label" class="hint">選択中の牌: なし</p>
     </section>
 
     <section>

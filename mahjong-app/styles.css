@@ -1,0 +1,149 @@
+:root {
+  color-scheme: light;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f7fb;
+  color: #1f2937;
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+.lead {
+  margin-bottom: 1rem;
+}
+
+.controls,
+.touch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.tile-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.tile {
+  background: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.45rem;
+  min-width: 62px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tile.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.tile-code {
+  font-size: 1.1rem;
+  display: block;
+}
+
+.tile button {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.55rem;
+  background: #ef4444;
+}
+
+.drawn-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 90px;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px dashed #94a3b8;
+  background: #fff;
+}
+
+.hint {
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+#log {
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  max-height: 220px;
+  overflow: auto;
+}
+
+#log li {
+  margin: 0.35rem 0;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .tile {
+    min-width: 54px;
+    padding: 0.4rem;
+  }
+
+  .tile-code {
+    font-size: 1rem;
+  }
+
+  .controls button,
+  .touch-actions button {
+    flex: 1 1 100%;
+  }
+}

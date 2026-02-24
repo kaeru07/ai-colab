@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>AI Colab 麻雀ミニゲーム</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>🀄 AI Colab 麻雀ミニゲーム</h1>
+    <p class="lead">配牌13枚から始めて、ツモと打牌を繰り返し、和了（4面子+1雀頭）を目指します。</p>
+
+    <section class="controls">
+      <button id="new-game-btn">新しい局を開始</button>
+      <button id="draw-btn" disabled>ツモる</button>
+    </section>
+
+    <section class="status-grid">
+      <div><strong>山残り:</strong> <span id="wall-count">0</span></div>
+      <div><strong>巡目:</strong> <span id="turn-count">0</span></div>
+      <div><strong>状態:</strong> <span id="game-state">未開始</span></div>
+    </section>
+
+    <section>
+      <h2>手牌</h2>
+      <div id="hand" class="tile-row"></div>
+      <p class="hint">iPhoneでは牌をタップして選択後「選択牌を捨てる」を押してください。</p>
+    </section>
+
+    <section>
+      <h2>タッチ操作（iPhone向け）</h2>
+      <div class="touch-actions">
+        <button id="discard-selected-btn" disabled>選択牌を捨てる</button>
+        <button id="discard-drawn-btn" disabled>ツモ牌を捨てる（ツモ切り）</button>
+      </div>
+      <p id="selected-tile-label" class="hint">選択中の牌: なし</p>
+    </section>
+
+    <section>
+      <h2>最新ツモ</h2>
+      <div id="drawn-tile" class="drawn-tile">-</div>
+    </section>
+
+    <section>
+      <h2>捨て牌</h2>
+      <div id="discards" class="tile-row"></div>
+    </section>
+
+    <section>
+      <h2>ログ</h2>
+      <ul id="log"></ul>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

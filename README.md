@@ -18,14 +18,31 @@ python3 -m http.server 8000
 
 PCブラウザで `http://localhost:8000/mahjong-app/` を開いてください。
 
-### iPhone から遊ぶ方法
+### iPhone での起動方法（明確版）
 
-1. PC と iPhone を同じ Wi-Fi に接続する。
-2. PC で上記コマンドを実行してサーバーを起動する。
-3. PC のローカルIPを確認する（例: `192.168.1.20`）。
-4. iPhone の Safari で `http://<PCのローカルIP>:8000/mahjong-app/` を開く。
+1. **PC と iPhone を同じ Wi-Fi に接続**します。
+2. PC で以下を実行してサーバーを起動します。
+
+```bash
+cd /workspace/ai-colab
+python3 -m http.server 8000
+```
+
+3. PC のローカルIPを確認します。
+   - macOS / Linux: `ipconfig getifaddr en0` または `ifconfig`
+   - Windows: `ipconfig`
+4. iPhone の Safari で次のURLを開きます。
+
+```text
+http://<PCのローカルIP>:8000/mahjong-app/
+```
 
 例: `http://192.168.1.20:8000/mahjong-app/`
+
+#### うまく開けないとき
+
+- PC 側のファイアウォールで `8000` ポート通信を許可してください。
+- VPN 接続中は同一LAN内通信が遮断されることがあるため、必要なら一時的に無効化してください。
 
 #### macOS の補足
 

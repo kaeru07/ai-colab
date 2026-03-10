@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>iPhone単体メモアプリ</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f4f6; color: #111827; }
+    .container { max-width: 720px; margin: 0 auto; padding: 16px; }
+    h1 { margin: 8px 0 4px; font-size: 1.4rem; }
+    .desc { color: #475569; margin: 0 0 12px; }
+    .card { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+    label { display: block; font-size: .9rem; margin-bottom: 4px; color: #334155; }
+    input, textarea, button { font: inherit; }
+    input, textarea {
+      width: 100%; border: 1px solid #cbd5e1; border-radius: 10px;
+      padding: 10px; min-height: 44px;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      border: 0; border-radius: 10px; min-height: 44px; padding: 10px 14px;
+      color: #fff; background: #2563eb;
+    }
+    button.secondary { background: #64748b; }
+    button.danger { background: #dc2626; }
+    .memo { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin: 8px 0; background: #fff; }
+    .memo-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .memo-title { font-weight: 700; margin: 0; word-break: break-word; }
+    .memo-body { white-space: pre-wrap; margin: 8px 0; word-break: break-word; }
+    .meta { color: #64748b; font-size: .8rem; }
+    .empty { color: #64748b; text-align: center; padding: 14px 6px; }
+    .badge { font-size: .75rem; color: #7c2d12; background: #ffedd5; border-radius: 999px; padding: 2px 8px; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    @media (max-width: 640px) { .row button { flex: 1 1 100%; } }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>📱 iPhone単体メモアプリ</h1>
+    <p class="desc">1ファイル完結。メモはこの端末のブラウザ保存領域（localStorage）に保存されます。</p>
+
+    <section class="card">
+      <label for="title">タイトル</label>
+      <input id="title" placeholder="買い物メモ" maxlength="80" />
+      <label for="content" style="margin-top:8px;">内容</label>
+      <textarea id="content" placeholder="牛乳、卵、パン..."></textarea>
+      <div class="row" style="margin-top:10px;">
+        <button id="save-btn" type="button">保存</button>
+        <button id="clear-btn" type="button" class="secondary">入力クリア</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <label for="search">検索</label>
+      <input id="search" placeholder="タイトル/内容で絞り込み" />
+      <div class="toolbar">
+        <button id="export-btn" type="button" class="secondary">JSONエクスポート</button>
+        <button id="import-btn" type="button" class="secondary">JSONインポート</button>
+        <input id="import-file" type="file" accept="application/json" hidden />
+        <button id="wipe-btn" type="button" class="danger">全削除</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div id="memo-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "iphoneStandaloneMemo.v1";
+
+    const el = {
+      title: document.getElementById("title"),
+      content: document.getElementById("content"),
+      saveBtn: document.getElementById("save-btn"),
+      clearBtn: document.getElementById("clear-btn"),
+      search: document.getElementById("search"),
+      exportBtn: document.getElementById("export-btn"),
+      importBtn: document.getElementById("import-btn"),
+      importFile: document.getElementById("import-file"),
+      wipeBtn: document.getElementById("wipe-btn"),
+      memoList: document.getElementById("memo-list")
+    };
+
+    let memos = loadMemos();
+
+    function loadMemos() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(memos));
+    }
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    function fmt(ts) {
+      return new Date(ts).toLocaleString("ja-JP");
+    }
+
+    function uid() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function clearInputs() {
+      el.title.value = "";
+      el.content.value = "";
+      el.title.focus();
+    }
+
+    function saveMemo() {
+      const title = el.title.value.trim();
+      const content = el.content.value.trim();
+      if (!title && !content) return;
+
+      memos.unshift({ id: uid(), title: title || "(無題)", content, pinned: false, createdAt: nowIso(), updatedAt: nowIso() });
+      persist();
+      clearInputs();
+      render();
+    }
+
+    function togglePin(id) {
+      memos = memos.map((m) => m.id === id ? { ...m, pinned: !m.pinned, updatedAt: nowIso() } : m);
+      sortMemos();
+      persist();
+      render();
+    }
+
+    function removeMemo(id) {
+      memos = memos.filter((m) => m.id !== id);
+      persist();
+      render();
+    }
+
+    function sortMemos() {
+      memos.sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    }
+
+    function filterMemos() {
+      const q = el.search.value.trim().toLowerCase();
+      if (!q) return memos;
+      return memos.filter((m) => `${m.title}\n${m.content}`.toLowerCase().includes(q));
+    }
+
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(memos, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `memo-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJson(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (!Array.isArray(parsed)) throw new Error("invalid");
+          memos = parsed.map((m) => ({
+            id: m.id || uid(),
+            title: String(m.title || "(無題)"),
+            content: String(m.content || ""),
+            pinned: Boolean(m.pinned),
+            createdAt: m.createdAt || nowIso(),
+            updatedAt: m.updatedAt || nowIso()
+          }));
+          sortMemos();
+          persist();
+          render();
+        } catch {
+          alert("JSONの形式が正しくありません。");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function wipeAll() {
+      if (!confirm("メモを全削除します。よろしいですか？")) return;
+      memos = [];
+      persist();
+      render();
+    }
+
+    function render() {
+      sortMemos();
+      const data = filterMemos();
+      if (data.length === 0) {
+        el.memoList.innerHTML = '<p class="empty">メモがありません</p>';
+        return;
+      }
+
+      el.memoList.innerHTML = data.map((m) => `
+        <article class="memo">
+          <div class="memo-header">
+            <p class="memo-title">${escapeHtml(m.title)} ${m.pinned ? '<span class="badge">固定</span>' : ''}</p>
+            <div class="row">
+              <button type="button" class="secondary" data-pin="${m.id}">${m.pinned ? '固定解除' : '固定'}</button>
+              <button type="button" class="danger" data-del="${m.id}">削除</button>
+            </div>
+          </div>
+          <p class="memo-body">${escapeHtml(m.content || "(本文なし)")}</p>
+          <p class="meta">更新: ${fmt(m.updatedAt)}</p>
+        </article>
+      `).join("");
+
+      el.memoList.querySelectorAll("[data-pin]").forEach((btn) => {
+        btn.addEventListener("click", () => togglePin(btn.dataset.pin));
+      });
+      el.memoList.querySelectorAll("[data-del]").forEach((btn) => {
+        btn.addEventListener("click", () => removeMemo(btn.dataset.del));
+      });
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    el.saveBtn.addEventListener("click", saveMemo);
+    el.clearBtn.addEventListener("click", clearInputs);
+    el.search.addEventListener("input", render);
+    el.exportBtn.addEventListener("click", exportJson);
+    el.importBtn.addEventListener("click", () => el.importFile.click());
+    el.importFile.addEventListener("change", (e) => {
+      const [file] = e.target.files || [];
+      if (file) importJson(file);
+      e.target.value = "";
+    });
+    el.wipeBtn.addEventListener("click", wipeAll);
+
+    render();
+  </script>
+</body>
+</html>

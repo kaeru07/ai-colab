@@ -1,96 +1,95 @@
-const WORK_SECONDS = 25 * 60;
-const BREAK_SECONDS = 5 * 60;
+const HANDS = [
+  { cards: ["A♠", "K♠", "Q♠", "J♠", "10♠"], answer: "ロイヤルフラッシュ" },
+  { cards: ["9♥", "8♥", "7♥", "6♥", "5♥"], answer: "ストレートフラッシュ" },
+  { cards: ["K♣", "K♦", "K♥", "K♠", "2♦"], answer: "フォーカード" },
+  { cards: ["Q♣", "Q♦", "Q♠", "8♥", "8♣"], answer: "フルハウス" },
+  { cards: ["A♦", "J♦", "8♦", "5♦", "2♦"], answer: "フラッシュ" },
+  { cards: ["10♣", "9♦", "8♠", "7♥", "6♦"], answer: "ストレート" },
+  { cards: ["7♣", "7♦", "7♠", "K♥", "4♣"], answer: "スリーカード" },
+  { cards: ["A♣", "A♥", "4♠", "4♦", "9♣"], answer: "ツーペア" },
+  { cards: ["J♣", "J♥", "8♠", "6♦", "2♣"], answer: "ワンペア" },
+  { cards: ["A♣", "J♥", "9♠", "6♦", "3♣"], answer: "ハイカード" },
+];
 
-const modeLabel = document.getElementById("modeLabel");
-const timeDisplay = document.getElementById("timeDisplay");
-const startPauseBtn = document.getElementById("startPauseBtn");
-const resetBtn = document.getElementById("resetBtn");
-const switchModeBtn = document.getElementById("switchModeBtn");
+const RANKS = [
+  "ロイヤルフラッシュ",
+  "ストレートフラッシュ",
+  "フォーカード",
+  "フルハウス",
+  "フラッシュ",
+  "ストレート",
+  "スリーカード",
+  "ツーペア",
+  "ワンペア",
+  "ハイカード",
+];
 
-let isWorkMode = true;
-let isRunning = false;
-let remainingSeconds = WORK_SECONDS;
-let timerId = null;
+const quizHand = document.getElementById("quizHand");
+const rankButtons = document.getElementById("rankButtons");
+const quizFeedback = document.getElementById("quizFeedback");
+const nextQuestionBtn = document.getElementById("nextQuestionBtn");
 
-function formatTime(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+const potSizeInput = document.getElementById("potSizeInput");
+const callAmountInput = document.getElementById("callAmountInput");
+const equityInput = document.getElementById("equityInput");
+const calcOddsBtn = document.getElementById("calcOddsBtn");
+const oddsResult = document.getElementById("oddsResult");
+
+let currentHand = null;
+
+function pickRandomHand() {
+  currentHand = HANDS[Math.floor(Math.random() * HANDS.length)];
+  quizHand.textContent = currentHand.cards.join("  ");
+  quizFeedback.textContent = "";
 }
 
-function syncUI() {
-  modeLabel.textContent = isWorkMode ? "作業" : "休憩";
-  timeDisplay.textContent = formatTime(remainingSeconds);
-  startPauseBtn.textContent = isRunning ? "一時停止" : "開始";
-  switchModeBtn.textContent = isWorkMode ? "休憩に切替" : "作業に切替";
-}
-
-function stopTimer() {
-  if (timerId) {
-    clearInterval(timerId);
-    timerId = null;
-  }
-  isRunning = false;
-}
-
-function notifyFinished() {
-  const message = isWorkMode ? "作業時間が終了しました！" : "休憩時間が終了しました！";
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(message);
-    return;
-  }
-  alert(message);
-}
-
-function startTimer() {
-  if (isRunning) {
-    return;
-  }
-
-  isRunning = true;
-  timerId = setInterval(() => {
-    if (remainingSeconds > 0) {
-      remainingSeconds -= 1;
-      syncUI();
-      return;
-    }
-
-    stopTimer();
-    syncUI();
-    notifyFinished();
-  }, 1000);
-}
-
-startPauseBtn.addEventListener("click", async () => {
-  if (isRunning) {
-    stopTimer();
-    syncUI();
+function handleRankAnswer(selectedRank) {
+  if (!currentHand) {
     return;
   }
 
-  if ("Notification" in window && Notification.permission === "default") {
-    try {
-      await Notification.requestPermission();
-    } catch {
-      // ignore
-    }
+  if (selectedRank === currentHand.answer) {
+    quizFeedback.textContent = `✅ 正解！ ${currentHand.answer}`;
+    quizFeedback.classList.add("ok");
+    quizFeedback.classList.remove("ng");
+  } else {
+    quizFeedback.textContent = `❌ 不正解。正解は ${currentHand.answer}`;
+    quizFeedback.classList.add("ng");
+    quizFeedback.classList.remove("ok");
+  }
+}
+
+function createRankButtons() {
+  RANKS.forEach((rank) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "small";
+    button.textContent = rank;
+    button.addEventListener("click", () => handleRankAnswer(rank));
+    rankButtons.appendChild(button);
+  });
+}
+
+function calculatePotOdds() {
+  const potSize = Number(potSizeInput.value);
+  const callAmount = Number(callAmountInput.value);
+  const equity = Number(equityInput.value);
+
+  if (!Number.isFinite(potSize) || !Number.isFinite(callAmount) || !Number.isFinite(equity) || callAmount <= 0) {
+    oddsResult.textContent = "入力値を確認してください。";
+    return;
   }
 
-  startTimer();
-  syncUI();
-});
+  const requiredEquity = (callAmount / (potSize + callAmount)) * 100;
+  const ev = ((equity / 100) * (potSize + callAmount)) - callAmount;
+  const decision = equity >= requiredEquity ? "コール候補" : "フォールド候補";
 
-resetBtn.addEventListener("click", () => {
-  stopTimer();
-  remainingSeconds = isWorkMode ? WORK_SECONDS : BREAK_SECONDS;
-  syncUI();
-});
+  oddsResult.textContent = `必要勝率: ${requiredEquity.toFixed(1)}% / 想定EV: ${ev.toFixed(1)} / 判断: ${decision}`;
+}
 
-switchModeBtn.addEventListener("click", () => {
-  stopTimer();
-  isWorkMode = !isWorkMode;
-  remainingSeconds = isWorkMode ? WORK_SECONDS : BREAK_SECONDS;
-  syncUI();
-});
+nextQuestionBtn.addEventListener("click", pickRandomHand);
+calcOddsBtn.addEventListener("click", calculatePotOdds);
 
-syncUI();
+createRankButtons();
+pickRandomHand();
+calculatePotOdds();

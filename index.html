@@ -3,27 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#4a67ff" />
-    <title>Focus Timer</title>
+    <meta name="theme-color" content="#0d3b2a" />
+    <title>ポーカー練習アプリ</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app">
-      <h1>Focus Timer</h1>
-      <p class="description">iPhoneだけで使える1ページタイマー</p>
+      <header class="hero">
+        <h1>ポーカー練習アプリ</h1>
+        <p>ハンド強さ判定とポットオッズ計算を毎日トレーニング。</p>
+      </header>
 
-      <section class="timer-card" aria-live="polite">
-        <p id="modeLabel" class="mode-label">作業</p>
-        <p id="timeDisplay" class="time-display">25:00</p>
+      <section class="card" aria-labelledby="quizTitle">
+        <h2 id="quizTitle">ハンドランク判定クイズ</h2>
+        <p id="quizHand" class="quiz-hand">-</p>
+        <div class="actions rank-buttons" id="rankButtons"></div>
+        <p id="quizFeedback" class="feedback" aria-live="polite"></p>
+        <button id="nextQuestionBtn" type="button" class="secondary">次の問題</button>
       </section>
 
-      <div class="controls">
-        <button id="startPauseBtn" type="button">開始</button>
-        <button id="resetBtn" type="button" class="secondary">リセット</button>
-        <button id="switchModeBtn" type="button" class="secondary">休憩に切替</button>
-      </div>
-
-      <p class="hint">Safariで開いてそのまま利用できます。</p>
+      <section class="card" aria-labelledby="oddsTitle">
+        <h2 id="oddsTitle">ポットオッズ計算</h2>
+        <div class="form-grid">
+          <label>
+            ポットサイズ
+            <input id="potSizeInput" type="number" min="0" step="1" value="100" />
+          </label>
+          <label>
+            コール額
+            <input id="callAmountInput" type="number" min="1" step="1" value="50" />
+          </label>
+          <label>
+            勝率（%）
+            <input id="equityInput" type="number" min="0" max="100" step="0.1" value="35" />
+          </label>
+        </div>
+        <button id="calcOddsBtn" type="button">計算する</button>
+        <p id="oddsResult" class="result" aria-live="polite"></p>
+      </section>
     </main>
 
     <script src="./script.js"></script>

@@ -52,3 +52,31 @@ http://<PCのローカルIP>:8000/mahjong-app/
 ```bash
 open http://localhost:8000/mahjong-app/
 ```
+
+## Vercel デプロイ用 1 ページWebアプリ（iPhone完結）
+
+このリポジトリのルートに、HTML/CSS/JavaScript だけで動く `Focus Timer` を配置しています。
+Vercel へデプロイすると、`/` にそのまま表示されます。
+
+### iPhoneだけで使う手順
+
+1. Vercelの公開URLをiPhoneのSafariで開く
+2. そのまま「開始」を押して利用
+3. 必要なら Safari の共有メニューから「ホーム画面に追加」
+
+### Vercel 公開手順
+
+1. このリポジトリを GitHub に push
+2. Vercel で `New Project` → 対象リポジトリを import
+3. Framework Preset は `Other`（または自動判定のまま）
+4. Build Command / Output Directory は未設定で OK（静的配信）
+5. Deploy
+
+### ローカル確認（任意）
+
+```bash
+cd /workspace/ai-colab
+python3 -m http.server 8000
+```
+
+`http://localhost:8000/` を開くと確認できます。

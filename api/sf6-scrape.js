@@ -55,6 +55,62 @@ function extractBySelectorLike(html, selector, limit) {
   return items;
 }
 
+async function fetchHtmlWithFallback(url) {
+  const directHeaders = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+    Referer: "https://www.streetfighter.com/",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+  };
+
+  try {
+    const response = await fetch(url, {
+      headers: directHeaders,
+      redirect: "follow",
+    });
+
+    if (response.ok) {
+      return {
+        ok: true,
+        html: await response.text(),
+        source: "direct",
+      };
+    }
+
+    return {
+      ok: false,
+      status: response.status,
+      reason: `direct fetch failed with ${response.status}`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: `direct fetch error: ${error.message}`,
+    };
+  }
+}
+
+async function fetchViaJinaAi(url) {
+  const fallbackUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, "")}`;
+  const response = await fetch(fallbackUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; SF6Tool/1.1)",
+      Accept: "text/plain,text/html;q=0.9,*/*;q=0.8",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`fallback fetch failed with ${response.status}`);
+  }
+
+  return {
+    html: await response.text(),
+    source: "jina-ai-fallback",
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });
@@ -66,18 +122,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; SF6Tool/1.0; +https://vercel.com)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-    });
+    const firstAttempt = await fetchHtmlWithFallback(url);
 
-    if (!response.ok) {
-      return res.status(502).json({ error: `取得に失敗しました: ${response.status}` });
+    let html = "";
+    let source = "direct";
+    let fetchErrorDetail = "";
+
+    if (firstAttempt.ok) {
+      html = firstAttempt.html;
+      source = firstAttempt.source;
+    } else {
+      fetchErrorDetail = firstAttempt.reason || "direct fetch failed";
+      const fallback = await fetchViaJinaAi(url);
+      html = fallback.html;
+      source = fallback.source;
     }
 
-    const html = await response.text();
     const title = matchOne(/<title[^>]*>([\s\S]*?)<\/title>/i, html);
     const description = matchOne(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i, html);
     const ogTitle = matchOne(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["'][^>]*>/i, html);
@@ -92,6 +152,8 @@ export default async function handler(req, res) {
         title,
         ogTitle,
         description,
+        source,
+        fallbackReason: fetchErrorDetail || undefined,
       },
       extracted,
       previewText: stripTags(html).slice(0, 500),

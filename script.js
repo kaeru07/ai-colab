@@ -1,15 +1,18 @@
 const statusView = document.getElementById("status");
 const resultView = document.getElementById("resultView");
 
-const profileUrlInput = document.getElementById("profileUrlInput");
 const rankingUrlInput = document.getElementById("rankingUrlInput");
 const customUrlInput = document.getElementById("customUrlInput");
 const selectorInput = document.getElementById("selectorInput");
 const limitInput = document.getElementById("limitInput");
 
+const openLoginBtn = document.getElementById("openLoginBtn");
 const fetchProfileBtn = document.getElementById("fetchProfileBtn");
 const fetchRankingBtn = document.getElementById("fetchRankingBtn");
 const fetchCustomBtn = document.getElementById("fetchCustomBtn");
+
+const PROFILE_URL = "https://www.streetfighter.com/6/buckler/ja-jp/profile";
+const LOGIN_URL = "https://www.streetfighter.com/6/buckler/ja-jp/login";
 
 function setStatus(message, isError = false) {
   statusView.textContent = message;
@@ -41,10 +44,15 @@ async function callScraper(payload) {
   }
 }
 
+openLoginBtn.addEventListener("click", () => {
+  window.open(LOGIN_URL, "_blank", "noopener,noreferrer");
+  setStatus("ログインページを新しいタブで開きました。ログイン後にプロフィール取得を実行してください。");
+});
+
 fetchProfileBtn.addEventListener("click", () => {
   callScraper({
     label: "profile",
-    url: profileUrlInput.value.trim(),
+    url: PROFILE_URL,
     selector: "h1, h2, .name, .player-name",
     limit: 8,
   });
